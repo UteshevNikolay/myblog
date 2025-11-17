@@ -35,6 +35,9 @@ A simple blog application built with Spring Framework, providing REST API for ma
 
 ## Installation and Setup
 
+### 0. Frontend Setup (Optional)
+To use fronted download dist and run docker-compose like in lesson instruction
+
 ### 1. Clone the Repository
 
 ```bash
@@ -99,7 +102,7 @@ This script will:
 
 ## Usage
 
-Once deployed, the application will be available at `http://localhost:8080/myblog/`.
+Once deployed, the application will be available at `http://localhost:8080/`.
 
 ### API Endpoints
 

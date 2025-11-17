@@ -74,7 +74,6 @@ public class BlogController {
         }
         return ResponseEntity.ok()
                 .contentType(mediaType)
-//                .cacheControl(CacheControl.maxAge(Duration.ofHours(24)).cachePublic())
                 .contentLength(postImage.getData().length)
                 .body(postImage.getData());
     }
