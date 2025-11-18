@@ -2,7 +2,6 @@ package org.myblog.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.myblog.dto.comment.CommentRequest;
 import org.myblog.dto.post.PostResponse;
 import org.myblog.dto.post.PostRequest;
 import org.myblog.dto.post.PostsResponse;
@@ -16,16 +15,10 @@ import org.myblog.repository.CommentRepository;
 import org.myblog.repository.PostImageRepository;
 import org.myblog.repository.PostRepository;
 import org.myblog.repository.TagRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -48,34 +41,33 @@ public class PostService {
 
         SearchQuery searchQuery = queryBuilder.buildSearchQuery(searchRequest);
 
-        Pageable pageable = getPageRequest(pageNumber, pageSize);
-        Page<Post> page;
-
-        long tagsCount = searchQuery.tagsFromSearch().size();
-
-        page = postRepository.searchByTitleAndAllTagNames(searchQuery.searchQuery(),
-                searchQuery.hasQuery(),
-                searchQuery.tagsFromSearch(),
-                searchQuery.hasTags(), tagsCount, pageable);
-
-        List<PostResponse> items = page.map(postMapper::toDto).getContent();
-
-        int totalPages = page.getTotalPages();
-        boolean hasPrev = pageable.getPageNumber() > 0 && totalPages > 0;
-        boolean hasNext = pageable.getPageNumber() + 1 < totalPages;
-
-        return new PostsResponse(items, hasPrev, hasNext, totalPages);
-    }
-
-    private Pageable getPageRequest(int pageNumber, int pageSize) {
-        if (pageNumber < 0) pageNumber = 0;
+        // Ensure valid page number and size (1-based pagination)
+        if (pageNumber < 1) pageNumber = 1;
         if (pageSize <= 0) pageSize = 20;
         if (pageSize > 100) pageSize = 100;
 
-        int zeroBasedPageNumber = pageNumber - 1; // Spring Data uses 0-based pagination
-        return PageRequest.of(zeroBasedPageNumber, pageSize);
-    }
+        long tagsCount = searchQuery.tagsFromSearch().size();
 
+        // Repository now accepts 1-based page numbers
+        PostRepository.PageResult<Post> page = postRepository.searchByTitleAndAllTagNames(
+                searchQuery.searchQuery(),
+                searchQuery.hasQuery(),
+                searchQuery.tagsFromSearch(),
+                searchQuery.hasTags(),
+                tagsCount,
+                pageNumber,
+                pageSize);
+
+        List<PostResponse> items = page.getContent().stream()
+                .map(postMapper::toDto)
+                .collect(java.util.stream.Collectors.toList());
+
+        int totalPages = page.getTotalPages();
+        boolean hasPrev = pageNumber > 1 && totalPages > 0;
+        boolean hasNext = pageNumber < totalPages;
+
+        return new PostsResponse(items, hasPrev, hasNext, totalPages);
+    }
 
     @Transactional
     public PostResponse savePost(PostRequest postRequest) {

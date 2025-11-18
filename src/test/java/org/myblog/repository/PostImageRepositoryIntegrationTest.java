@@ -1,13 +1,12 @@
 package org.myblog.repository;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.myblog.config.AbstractIntegrationTest;
 import org.myblog.entity.Post;
 import org.myblog.entity.PostImage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
@@ -24,18 +23,17 @@ class PostImageRepositoryIntegrationTest extends AbstractIntegrationTest {
     @Autowired
     private PostRepository postRepository;
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @BeforeEach
     void setUp() {
-        // Use native queries to delete in correct order
-        entityManager.createNativeQuery("DELETE FROM comments").executeUpdate();
-        entityManager.createNativeQuery("DELETE FROM post_images").executeUpdate();
-        entityManager.createNativeQuery("DELETE FROM posts_tags").executeUpdate();
-        entityManager.createNativeQuery("DELETE FROM posts").executeUpdate();
-        entityManager.createNativeQuery("DELETE FROM tags").executeUpdate();
-        entityManager.flush();
+        // Delete in correct order
+        jdbcTemplate.execute("DELETE FROM comments");
+        jdbcTemplate.execute("DELETE FROM post_images");
+        jdbcTemplate.execute("DELETE FROM posts_tags");
+        jdbcTemplate.execute("DELETE FROM posts");
+        jdbcTemplate.execute("DELETE FROM tags");
     }
 
     @Test
@@ -43,7 +41,7 @@ class PostImageRepositoryIntegrationTest extends AbstractIntegrationTest {
         // Given
         Post post = createAndSavePost("Test Post");
         PostImage image = new PostImage();
-        image.setPost(post);
+        image.setPostId(post.getId());
         image.setData(new byte[]{1, 2, 3, 4, 5});
         image.setFilename("test.jpg");
         image.setContentType("image/jpeg");
@@ -53,7 +51,7 @@ class PostImageRepositoryIntegrationTest extends AbstractIntegrationTest {
         PostImage saved = postImageRepository.save(image);
 
         // Then
-        assertThat(saved.getPost().getId()).isEqualTo(post.getId());
+        assertThat(saved.getPostId()).isEqualTo(post.getId());
         assertThat(saved.getData()).hasSize(5);
         assertThat(saved.getFilename()).isEqualTo("test.jpg");
         assertThat(saved.getContentType()).isEqualTo("image/jpeg");
@@ -65,7 +63,7 @@ class PostImageRepositoryIntegrationTest extends AbstractIntegrationTest {
         // Given
         Post post = createAndSavePost("Test Post");
         PostImage image = new PostImage();
-        image.setPost(post);
+        image.setPostId(post.getId());
         image.setData(new byte[]{1, 2, 3});
         image.setFilename("test.jpg");
         image.setContentType("image/jpeg");
@@ -98,7 +96,7 @@ class PostImageRepositoryIntegrationTest extends AbstractIntegrationTest {
         // Given
         Post post = createAndSavePost("Test Post");
         PostImage image = new PostImage();
-        image.setPost(post);
+        image.setPostId(post.getId());
         image.setData(new byte[]{1, 2, 3});
         image.setFilename("old.jpg");
         image.setContentType("image/jpeg");
@@ -110,7 +108,6 @@ class PostImageRepositoryIntegrationTest extends AbstractIntegrationTest {
         image.setFilename("new.jpg");
         image.setSizeBytes(4L);
         postImageRepository.save(image);
-        postImageRepository.flush();
 
         // Then
         Optional<PostImage> updated = postImageRepository.findByPostId(post.getId());
@@ -125,7 +122,7 @@ class PostImageRepositoryIntegrationTest extends AbstractIntegrationTest {
         // Given
         Post post = createAndSavePost("Test Post");
         PostImage image = new PostImage();
-        image.setPost(post);
+        image.setPostId(post.getId());
         image.setData(new byte[]{1, 2, 3});
         image.setFilename("test.jpg");
         image.setContentType("image/jpeg");
@@ -134,7 +131,6 @@ class PostImageRepositoryIntegrationTest extends AbstractIntegrationTest {
 
         // When
         postImageRepository.delete(image);
-        postImageRepository.flush();
 
         // Then
         Optional<PostImage> found = postImageRepository.findByPostId(post.getId());
@@ -151,7 +147,7 @@ class PostImageRepositoryIntegrationTest extends AbstractIntegrationTest {
         }
 
         PostImage image = new PostImage();
-        image.setPost(post);
+        image.setPostId(post.getId());
         image.setData(largeData);
         image.setFilename("large.jpg");
         image.setContentType("image/jpeg");
@@ -159,7 +155,6 @@ class PostImageRepositoryIntegrationTest extends AbstractIntegrationTest {
 
         // When
         PostImage saved = postImageRepository.save(image);
-        postImageRepository.flush();
 
         // Then
         Optional<PostImage> found = postImageRepository.findByPostId(post.getId());
@@ -176,10 +171,10 @@ class PostImageRepositoryIntegrationTest extends AbstractIntegrationTest {
 
         for (String contentType : formats) {
             // Clean previous image
-            postImageRepository.deleteAll();
+            jdbcTemplate.execute("DELETE FROM post_images");
 
             PostImage image = new PostImage();
-            image.setPost(post);
+            image.setPostId(post.getId());
             image.setData(("test-" + contentType).getBytes());
             image.setFilename("test." + contentType.split("/")[1]);
             image.setContentType(contentType);
@@ -207,7 +202,7 @@ class PostImageRepositoryIntegrationTest extends AbstractIntegrationTest {
         }
 
         PostImage image = new PostImage();
-        image.setPost(post);
+        image.setPostId(post.getId());
         image.setData(originalData);
         image.setFilename("integrity-test.bin");
         image.setContentType("application/octet-stream");
@@ -215,7 +210,6 @@ class PostImageRepositoryIntegrationTest extends AbstractIntegrationTest {
 
         // When
         postImageRepository.save(image);
-        postImageRepository.flush();
 
         // Then
         Optional<PostImage> retrieved = postImageRepository.findByPostId(post.getId());
@@ -242,14 +236,14 @@ class PostImageRepositoryIntegrationTest extends AbstractIntegrationTest {
         Post post2 = createAndSavePost("Post 2");
 
         PostImage image1 = new PostImage();
-        image1.setPost(post1);
+        image1.setPostId(post1.getId());
         image1.setData("image1 data".getBytes());
         image1.setFilename("image1.jpg");
         image1.setContentType("image/jpeg");
         image1.setSizeBytes(11L);
 
         PostImage image2 = new PostImage();
-        image2.setPost(post2);
+        image2.setPostId(post2.getId());
         image2.setData("image2 data".getBytes());
         image2.setFilename("image2.png");
         image2.setContentType("image/png");

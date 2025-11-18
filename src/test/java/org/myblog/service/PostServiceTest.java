@@ -170,11 +170,11 @@ class PostServiceTest {
         // Given
         long postId = 1L;
         List<Comment> comments = new ArrayList<>();
-        comments.add(new Comment(1L, testPost, "Comment 1"));
-        comments.add(new Comment(2L, testPost, "Comment 2"));
+        comments.add(new Comment(1L, postId, "Comment 1"));
+        comments.add(new Comment(2L, postId, "Comment 2"));
 
         PostImage postImage = new PostImage();
-        postImage.setPost(testPost);
+        postImage.setPostId(postId);
 
         when(postRepository.findPostById(postId)).thenReturn(testPost);
         when(commentRepository.findByPostIdOrderByIdAsc(postId)).thenReturn(comments);

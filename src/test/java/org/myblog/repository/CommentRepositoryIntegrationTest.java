@@ -6,6 +6,7 @@ import org.myblog.config.AbstractIntegrationTest;
 import org.myblog.entity.Comment;
 import org.myblog.entity.Post;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
@@ -23,34 +24,33 @@ class CommentRepositoryIntegrationTest extends AbstractIntegrationTest {
     private PostRepository postRepository;
 
     @Autowired
-    private TagRepository tagRepository;
-
-    @Autowired
-    private PostImageRepository postImageRepository;
+    private JdbcTemplate jdbcTemplate;
 
     private Post testPost;
 
     @BeforeEach
     void setUp() {
-        commentRepository.deleteAll();
-        postImageRepository.deleteAll();
-        postRepository.deleteAll();
-        tagRepository.deleteAll();
+        // Delete in correct order
+        jdbcTemplate.execute("DELETE FROM comments");
+        jdbcTemplate.execute("DELETE FROM post_images");
+        jdbcTemplate.execute("DELETE FROM posts_tags");
+        jdbcTemplate.execute("DELETE FROM posts");
+        jdbcTemplate.execute("DELETE FROM tags");
 
         // Create a test post
         testPost = new Post();
         testPost.setTitle("Test Post");
         testPost.setText("Content");
         testPost.setTags(new HashSet<>());
-        testPost.setLikesCount(Integer.valueOf(0));
-        testPost.setCommentsCount(Integer.valueOf(0));
+        testPost.setLikesCount(0);
+        testPost.setCommentsCount(0);
         testPost = postRepository.save(testPost);
     }
 
     @Test
     void save_shouldPersistComment() {
         // Given
-        Comment comment = new Comment(testPost, "Test comment");
+        Comment comment = new Comment(testPost.getId(), "Test comment");
 
         // When
         Comment saved = commentRepository.save(comment);
@@ -58,15 +58,15 @@ class CommentRepositoryIntegrationTest extends AbstractIntegrationTest {
         // Then
         assertThat(saved.getId()).isNotNull();
         assertThat(saved.getText()).isEqualTo("Test comment");
-        assertThat(saved.getPost().getId()).isEqualTo(testPost.getId());
+        assertThat(saved.getPostId()).isEqualTo(testPost.getId());
     }
 
     @Test
     void findByPostIdOrderByIdAsc_shouldReturnCommentsInOrder() {
         // Given
-        Comment comment1 = commentRepository.save(new Comment(testPost, "First comment"));
-        Comment comment2 = commentRepository.save(new Comment(testPost, "Second comment"));
-        Comment comment3 = commentRepository.save(new Comment(testPost, "Third comment"));
+        Comment comment1 = commentRepository.save(new Comment(testPost.getId(), "First comment"));
+        Comment comment2 = commentRepository.save(new Comment(testPost.getId(), "Second comment"));
+        Comment comment3 = commentRepository.save(new Comment(testPost.getId(), "Third comment"));
 
         // When
         List<Comment> results = commentRepository.findByPostIdOrderByIdAsc(testPost.getId());
@@ -90,7 +90,7 @@ class CommentRepositoryIntegrationTest extends AbstractIntegrationTest {
     @Test
     void findByPostIdAndId_shouldReturnComment_whenExists() {
         // Given
-        Comment comment = commentRepository.save(new Comment(testPost, "Test comment"));
+        Comment comment = commentRepository.save(new Comment(testPost.getId(), "Test comment"));
 
         // When
         Comment found = commentRepository.findByPostIdAndId(testPost.getId(), comment.getId());
@@ -113,11 +113,10 @@ class CommentRepositoryIntegrationTest extends AbstractIntegrationTest {
     @Test
     void delete_shouldRemoveComment() {
         // Given
-        Comment comment = commentRepository.save(new Comment(testPost, "Test comment"));
+        Comment comment = commentRepository.save(new Comment(testPost.getId(), "Test comment"));
 
         // When
-        commentRepository.delete(comment);
-        commentRepository.flush();
+        commentRepository.deleteById(comment.getId());
 
         // Then
         Comment found = commentRepository.findByPostIdAndId(testPost.getId(), comment.getId());
@@ -131,12 +130,12 @@ class CommentRepositoryIntegrationTest extends AbstractIntegrationTest {
         post2.setTitle("Another Post");
         post2.setText("Content");
         post2.setTags(new HashSet<>());
-        post2.setLikesCount(Integer.valueOf(0));
-        post2.setCommentsCount(Integer.valueOf(0));
+        post2.setLikesCount(0);
+        post2.setCommentsCount(0);
         post2 = postRepository.save(post2);
 
-        commentRepository.save(new Comment(testPost, "Comment on post 1"));
-        commentRepository.save(new Comment(post2, "Comment on post 2"));
+        commentRepository.save(new Comment(testPost.getId(), "Comment on post 1"));
+        commentRepository.save(new Comment(post2.getId(), "Comment on post 2"));
 
         // When
         List<Comment> comments1 = commentRepository.findByPostIdOrderByIdAsc(testPost.getId());

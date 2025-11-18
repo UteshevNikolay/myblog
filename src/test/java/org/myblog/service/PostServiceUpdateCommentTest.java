@@ -20,9 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for CommentService.updatePostComment method
- */
 @ExtendWith(MockitoExtension.class)
 class CommentServiceUpdateCommentTest {
 
@@ -44,16 +41,16 @@ class CommentServiceUpdateCommentTest {
     @BeforeEach
     void setUp() {
         testPost = new Post();
-        testPost.setId(Long.valueOf(1));
+        testPost.setId(1L);
         testPost.setTitle("Test Post");
         testPost.setText("Test Content");
         testPost.setTags(new HashSet<>());
-        testPost.setLikesCount(Integer.valueOf(0));
-        testPost.setCommentsCount(Integer.valueOf(1));
+        testPost.setLikesCount(0);
+        testPost.setCommentsCount(1);
 
         testComment = new Comment();
-        testComment.setId(Long.valueOf(1));
-        testComment.setPost(testPost);
+        testComment.setId(1L);
+        testComment.setPostId(1L);
         testComment.setText("Original comment text");
     }
 

@@ -15,7 +15,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 
 @SpringJUnitWebConfig(classes = {
-        org.myblog.config.JpaConfig.class,
+        DbConfig.class,
         org.myblog.config.WebConfig.class
 })
 @ActiveProfiles("test")

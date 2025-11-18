@@ -1,12 +1,11 @@
 package org.myblog.repository;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.myblog.config.AbstractIntegrationTest;
 import org.myblog.entity.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
@@ -19,18 +18,17 @@ class TagRepositoryIntegrationTest extends AbstractIntegrationTest {
     @Autowired
     private TagRepository tagRepository;
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @BeforeEach
     void setUp() {
-        // Use native queries to delete in correct order
-        entityManager.createNativeQuery("DELETE FROM comments").executeUpdate();
-        entityManager.createNativeQuery("DELETE FROM post_images").executeUpdate();
-        entityManager.createNativeQuery("DELETE FROM posts_tags").executeUpdate();
-        entityManager.createNativeQuery("DELETE FROM posts").executeUpdate();
-        entityManager.createNativeQuery("DELETE FROM tags").executeUpdate();
-        entityManager.flush();
+        // Delete in correct order
+        jdbcTemplate.execute("DELETE FROM comments");
+        jdbcTemplate.execute("DELETE FROM post_images");
+        jdbcTemplate.execute("DELETE FROM posts_tags");
+        jdbcTemplate.execute("DELETE FROM posts");
+        jdbcTemplate.execute("DELETE FROM tags");
     }
 
     @Test
@@ -86,8 +84,7 @@ class TagRepositoryIntegrationTest extends AbstractIntegrationTest {
         Tag tag = tagRepository.save(new Tag("ToDelete"));
 
         // When
-        tagRepository.delete(tag);
-        tagRepository.flush();
+        tagRepository.deleteById(tag.getId());
 
         // Then
         Optional<Tag> found = tagRepository.findByNameIgnoreCase("ToDelete");
@@ -114,7 +111,6 @@ class TagRepositoryIntegrationTest extends AbstractIntegrationTest {
     void save_shouldEnforceUniqueConstraint() {
         // Given
         tagRepository.save(new Tag("Java"));
-        entityManager.flush();
 
         // When & Then
         Tag duplicate = new Tag("Java");
@@ -124,7 +120,6 @@ class TagRepositoryIntegrationTest extends AbstractIntegrationTest {
                 org.springframework.dao.DataIntegrityViolationException.class,
                 () -> {
                     tagRepository.save(duplicate);
-                    entityManager.flush();
                 }
         );
     }
@@ -133,7 +128,6 @@ class TagRepositoryIntegrationTest extends AbstractIntegrationTest {
     void save_shouldEnforceCaseInsensitiveUniqueness() {
         // Given
         tagRepository.save(new Tag("java"));
-        entityManager.flush();
 
         // When & Then - Try to save with different case
         Tag differentCase = new Tag("JAVA");
@@ -143,7 +137,6 @@ class TagRepositoryIntegrationTest extends AbstractIntegrationTest {
                 org.springframework.dao.DataIntegrityViolationException.class,
                 () -> {
                     tagRepository.save(differentCase);
-                    entityManager.flush();
                 }
         );
     }

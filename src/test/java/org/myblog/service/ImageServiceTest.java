@@ -23,9 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for ImageService
- */
 @ExtendWith(MockitoExtension.class)
 class ImageServiceTest {
 
@@ -52,7 +49,7 @@ class ImageServiceTest {
         testPost.setCommentsCount(0);
 
         testPostImage = new PostImage();
-        testPostImage.setPost(testPost);
+        testPostImage.setPostId(testPost.getId());
         testPostImage.setData(new byte[]{1, 2, 3, 4, 5});
         testPostImage.setFilename("test.jpg");
         testPostImage.setContentType("image/jpeg");

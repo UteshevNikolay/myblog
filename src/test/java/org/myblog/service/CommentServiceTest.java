@@ -54,7 +54,7 @@ class CommentServiceTest {
 
         testComment = new Comment();
         testComment.setId(1L);
-        testComment.setPost(testPost);
+        testComment.setPostId(1L);
         testComment.setText("Test Comment");
     }
 
@@ -63,7 +63,7 @@ class CommentServiceTest {
         // Given
         long postId = 1L;
         CommentRequest request = new CommentRequest("New Comment");
-        Comment newComment = new Comment(testPost, "New Comment");
+        Comment newComment = new Comment(postId, "New Comment");
         newComment.setId(2L);
 
         CommentResponse expectedResponse = new CommentResponse(2L, "New Comment", 1L);
@@ -132,8 +132,8 @@ class CommentServiceTest {
     void getCommentsByPostId_shouldReturnComments_whenPostExists() {
         // Given
         long postId = 1L;
-        Comment comment1 = new Comment(1L, testPost, "Comment 1");
-        Comment comment2 = new Comment(2L, testPost, "Comment 2");
+        Comment comment1 = new Comment(1L, postId, "Comment 1");
+        Comment comment2 = new Comment(2L, postId, "Comment 2");
         List<Comment> comments = Arrays.asList(comment1, comment2);
 
         List<CommentResponse> expectedResponses = Arrays.asList(

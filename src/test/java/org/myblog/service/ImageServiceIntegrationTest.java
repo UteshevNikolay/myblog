@@ -6,13 +6,11 @@ import org.myblog.config.AbstractIntegrationTest;
 import org.myblog.dto.post.PostRequest;
 import org.myblog.dto.post.PostResponse;
 import org.myblog.entity.PostImage;
-import org.myblog.repository.CommentRepository;
 import org.myblog.repository.PostImageRepository;
-import org.myblog.repository.PostRepository;
-import org.myblog.repository.TagRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,9 +20,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Integration tests for ImageService using Testcontainers
- */
 @Transactional
 class ImageServiceIntegrationTest extends AbstractIntegrationTest {
 
@@ -35,26 +30,21 @@ class ImageServiceIntegrationTest extends AbstractIntegrationTest {
     private PostService postService;
 
     @Autowired
-    private PostRepository postRepository;
-
-    @Autowired
     private PostImageRepository postImageRepository;
 
     @Autowired
-    private TagRepository tagRepository;
-
-    @Autowired
-    private CommentRepository commentRepository;
+    private JdbcTemplate jdbcTemplate;
 
     private PostResponse testPost;
 
     @BeforeEach
     void setUp() {
         // Clean up before each test
-        commentRepository.deleteAll();
-        postImageRepository.deleteAll();
-        postRepository.deleteAll();
-        tagRepository.deleteAll();
+        jdbcTemplate.execute("DELETE FROM comments");
+        jdbcTemplate.execute("DELETE FROM post_images");
+        jdbcTemplate.execute("DELETE FROM posts_tags");
+        jdbcTemplate.execute("DELETE FROM posts");
+        jdbcTemplate.execute("DELETE FROM tags");
 
         // Create a test post
         PostRequest request = new PostRequest("Test Post", "Test content", Arrays.asList("Java"));
@@ -202,7 +192,7 @@ class ImageServiceIntegrationTest extends AbstractIntegrationTest {
 
         for (String[] format : formats) {
             // Clean previous image
-            postImageRepository.deleteAll();
+            jdbcTemplate.execute("DELETE FROM post_images");
 
             MockMultipartFile image = new MockMultipartFile(
                     "image",

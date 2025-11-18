@@ -7,13 +7,10 @@ import org.myblog.config.AbstractIntegrationTest;
 import org.myblog.dto.comment.CommentRequest;
 import org.myblog.dto.post.PostRequest;
 import org.myblog.dto.post.PostResponse;
-import org.myblog.repository.CommentRepository;
-import org.myblog.repository.PostImageRepository;
-import org.myblog.repository.PostRepository;
-import org.myblog.repository.TagRepository;
 import org.myblog.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -36,16 +33,7 @@ class BlogControllerIntegrationTest extends AbstractIntegrationTest {
     private PostService postService;
 
     @Autowired
-    private PostRepository postRepository;
-
-    @Autowired
-    private TagRepository tagRepository;
-
-    @Autowired
-    private CommentRepository commentRepository;
-
-    @Autowired
-    private PostImageRepository postImageRepository;
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -56,10 +44,11 @@ class BlogControllerIntegrationTest extends AbstractIntegrationTest {
     void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
 
-        commentRepository.deleteAll();
-        postImageRepository.deleteAll();
-        postRepository.deleteAll();
-        tagRepository.deleteAll();
+        jdbcTemplate.execute("DELETE FROM comments");
+        jdbcTemplate.execute("DELETE FROM post_images");
+        jdbcTemplate.execute("DELETE FROM posts_tags");
+        jdbcTemplate.execute("DELETE FROM posts");
+        jdbcTemplate.execute("DELETE FROM tags");
     }
 
     @Test

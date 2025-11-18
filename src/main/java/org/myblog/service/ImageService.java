@@ -44,7 +44,7 @@ public class ImageService {
 
         PostImage postImage = postImageRepository.findByPostId(postId).orElseGet(() -> {
             PostImage pi = new PostImage();
-            pi.setPost(post);
+            pi.setPostId(postId);
             return pi;
         });
         postImage.setData(image.getBytes());

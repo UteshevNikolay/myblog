@@ -91,7 +91,7 @@ public class CommentService {
             log.warn("Could not create comment because post with id {} does not exist", postId);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        Comment comment = commentRepository.save(new Comment(post, text));
+        Comment comment = commentRepository.save(new Comment(postId, text));
 
         int current = post.getCommentsCount();
         post.setCommentsCount(current + 1);

@@ -13,7 +13,7 @@
   </context-param>
   <context-param>
     <param-name>contextConfigLocation</param-name>
-    <param-value>org.myblog.config.JpaConfig</param-value>
+    <param-value>org.myblog.config.DbConfig</param-value>
   </context-param>
 
   <listener>
