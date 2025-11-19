@@ -13,7 +13,7 @@
   </context-param>
   <context-param>
     <param-name>contextConfigLocation</param-name>
-    <param-value>org.myblog.config.WebConfig</param-value>
+    <param-value>org.myblog.config.DbConfig</param-value>
   </context-param>
 
   <listener>
@@ -33,6 +33,11 @@
       <param-value>org.myblog.config.WebConfig</param-value>
     </init-param>
     <load-on-startup>1</load-on-startup>
+    <multipart-config>
+      <max-file-size>104857600</max-file-size>        <!-- 100MB -->
+      <max-request-size>115343360</max-request-size>  <!-- ~110MB headroom for headers/multipart overhead -->
+      <file-size-threshold>0</file-size-threshold>
+    </multipart-config>
   </servlet>
 
   <servlet-mapping>
