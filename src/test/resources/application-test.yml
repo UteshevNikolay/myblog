@@ -1,0 +1,14 @@
+spring:
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
+  datasource:
+    # No need to specify url, username, password here
+    # these will be automatically configured by @ServiceConnection from
+    # testcontainers
+    driver-class-name: org.postgresql.Driver
+
+logging:
+  level:
+    liquibase: INFO
+
