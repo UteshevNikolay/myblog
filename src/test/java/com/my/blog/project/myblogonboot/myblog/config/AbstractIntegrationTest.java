@@ -6,8 +6,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@Import(MyBlogTestConfiguration.class)
+@Import(BaseTestConfiguration.class)
 public abstract class AbstractIntegrationTest {
-
 }
 

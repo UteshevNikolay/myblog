@@ -1,13 +1,16 @@
 # Gradle
 .gradle/
 build/
+out/
+bin/
 
 ### IntelliJ IDEA ###
-postgres_data
-.idea
+.idea/
 *.iws
 *.iml
 *.ipr
+*.swp
+*.swo
 
 ### Eclipse ###
 .apt_generated
@@ -24,14 +27,22 @@ postgres_data
 /dist/
 /nbdist/
 /.nb-gradle/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
 ### VS Code ###
 .vscode/
 
 ### Mac OS ###
 .DS_Store
+.AppleDouble
+.LSOverride
 
 # Logs
 *.log
+logs/
+
+# Environment files
+.env
+
+# Database
+postgres_data/
+*.db

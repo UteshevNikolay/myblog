@@ -1,9 +1,21 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/testdb
-    username: user
-    password: password
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/testdb}
+    username: ${DB_USERNAME:user}
+    password: ${DB_PASSWORD:password}
     driver-class-name: org.postgresql.Driver
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
     enabled: true
+
+
+logging:
+  level:
+    com.my.blog.project.myblogonboot: INFO
+    org.springframework.web: INFO
+    org.springframework.jdbc.core: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+server:
+  port: 8080

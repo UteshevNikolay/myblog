@@ -1,6 +1,6 @@
-# MyBlog
+# MyBlog on Boot
 
-A simple blog application built with Spring Framework, providing REST API for managing blog posts, comments, and images.
+A RESTful blog application built with Spring Boot, providing API for managing blog posts, comments, and images.
 
 ## Features
 
@@ -9,18 +9,19 @@ A simple blog application built with Spring Framework, providing REST API for ma
 - Upload and download images for posts
 - Search posts by title or content
 - Pagination support for posts
-- Like posts
+- Like posts functionality
+- Tag support for posts
 
 ## Technologies Used
 
 - **Java**: 21
-- **Spring Framework**: 6.1.0
-- **Spring Data JPA**: 3.3.4
-- **Hibernate**: 6.6.1.Final
+- **Spring Boot**: 4.0.0
+- **Spring Data JDBC**: For database operations
 - **PostgreSQL**: 16
-- **Liquibase**: 4.29.2 (for database migrations)
-- **Maven**: For build management
-- **Tomcat**: For deployment
+- **Liquibase**: For database migrations
+- **Gradle**: For build management
+- **Lombok**: For reducing boilerplate code
+- **MapStruct**: For object mapping
 - **Docker**: For PostgreSQL containerization
 - **JUnit 5**: For unit testing
 - **Mockito**: For mocking in tests
@@ -29,20 +30,16 @@ A simple blog application built with Spring Framework, providing REST API for ma
 ## Prerequisites
 
 - Java 21 or higher
-- Maven 3.6+
-- Docker and Docker Compose
-- Apache Tomcat 10.1+ (for deployment)
+- Docker and Docker Compose (for PostgreSQL)
+- Gradle (wrapper included)
 
 ## Installation and Setup
-
-### 0. Frontend Setup (Optional)
-To use fronted download dist and run docker-compose like in lesson instruction
 
 ### 1. Clone the Repository
 
 ```bash
 git clone <repository-url>
-cd myblog
+cd myblogonboot
 ```
 
 ### 2. Start PostgreSQL Database
@@ -54,138 +51,166 @@ docker-compose up -d
 ```
 
 This will start a PostgreSQL container with the following configuration:
-- Database: `testdb`
-- User: `user`
-- Password: `password`
-- Port: `5432`
+- **Database**: `testdb`
+- **User**: `user`
+- **Password**: `password`
+- **Port**: `5432`
 
-### 3. Run Database Migrations
+### 3. Build and Run the Application
 
-Apply Liquibase migrations to set up the database schema:
-
-```bash
-mvn liquibase:update
-```
-**Note**: Liquibase can also be run automatically during application startup if configured.
-
-### 4. Build the Application
-
-Compile and package the application:
+#### Option 1: Run directly with Gradle
 
 ```bash
-mvn clean package
+./gradlew bootRun
 ```
 
-This will generate a `target/ROOT.war` file.
+#### Option 2: Build executable JAR and run it
 
-### 5. Deploy to Tomcat
-Download and install Apache Tomcat if you haven't already.
-Use the provided deployment script:
+Build the executable JAR:
 
 ```bash
-chmod +x deploy.sh
-./deploy.sh
+./gradlew clean bootJar
 ```
 
-`check-deployment.sh`
-Run this to diagnose deployment issues:
+This will create an executable JAR file at `build/libs/myblogonboot-0.0.1-SNAPSHOT.jar` (~32 MB).
+
+Run the JAR:
+
 ```bash
-./check-deployment.sh
+java -jar build/libs/myblogonboot-0.0.1-SNAPSHOT.jar
 ```
 
-This script will:
-- Build the WAR file
-- Copy it to Tomcat's webapps directory
-- Start Tomcat
+**Note**: 
+- The executable JAR contains all dependencies and can be deployed anywhere with Java 21+
+- Liquibase migrations will run automatically on application startup, creating all necessary database tables
+- To rebuild the JAR after making changes, run `./gradlew clean bootJar` again
 
-**Note**: Update the `TOMCAT_HOME` path in `deploy.sh` to match your Tomcat installation directory.
+### 4. Access the Application
 
-## Usage
+The application will be available at:
+- **API Base URL**: `http://localhost:8080/api/posts`
+- **Server Port**: `8080`
 
-Once deployed, the application will be available at `http://localhost:8080/`.
+### 5. Run Tests
 
-### API Endpoints
+Run all tests (including integration tests with Testcontainers):
 
-#### Posts
+```bash
+./gradlew test
+```
 
-- `GET /api/posts` - Get all posts (with optional search, pagination)
-- `GET /api/posts/{postId}` - Get a specific post
+## API Endpoints
+
+### Posts
+
+- `GET /api/posts` - Get all posts (with optional search and pagination)
+  - Query params: `search` (optional), `pageNumber` (default: 0), `pageSize` (default: 20)
+- `GET /api/posts/{postId}` - Get a specific post by ID
 - `POST /api/posts` - Create a new post
-- `PUT /api/posts/{postId}` - Update a post
+- `PUT /api/posts/{postId}` - Update an existing post
 - `DELETE /api/posts/{postId}` - Delete a post
-- `POST /api/posts/{postId}/likes` - Like a post
+- `POST /api/posts/{postId}/likes` - Increment likes for a post
 
-#### Comments
+### Comments
 
-- `GET /api/posts/{postId}/comments` - Get comments for a post
+- `GET /api/posts/{postId}/comments` - Get all comments for a post
 - `GET /api/posts/{postId}/comments/{commentId}` - Get a specific comment
 - `POST /api/posts/{postId}/comments` - Add a comment to a post
 - `PUT /api/posts/{postId}/comments/{commentId}` - Update a comment
 
-#### Images
+### Images
 
 - `GET /api/posts/{postId}/image` - Download image for a post
-- `PUT /api/posts/{postId}/image` - Upload image for a post
+- `PUT /api/posts/{postId}/image` - Upload image for a post (multipart/form-data)
 
-### Request/Response Examples
+## Request/Response Examples
 
-#### Create a Post
+### Create a Post
 
 ```bash
-curl -X POST http://localhost:8080/myblog/api/posts \
+curl -X POST http://localhost:8080/api/posts \
   -H "Content-Type: application/json" \
   -d '{
     "title": "My First Post",
-    "content": "This is the content of my first blog post."
+    "content": "This is the content of my first blog post.",
+    "tags": ["spring", "java"]
   }'
 ```
 
-#### Get Posts with Search
+### Get Posts with Search and Pagination
 
 ```bash
-curl "http://localhost:8080/myblog/api/posts?search=first&pageNumber=0&pageSize=10"
+curl "http://localhost:8080/api/posts?search=first&pageNumber=0&pageSize=10"
 ```
 
-## Testing
-
-Run the tests using Maven:
+### Upload an Image
 
 ```bash
-mvn test
+curl -X PUT http://localhost:8080/api/posts/1/image \
+  -F "image=@/path/to/image.jpg"
 ```
 
-The project includes:
-- Unit tests for services
-- Integration tests for repositories and controllers
-- Tests use Testcontainers for real database testing
+### Add a Comment
+
+```bash
+curl -X POST http://localhost:8080/api/posts/1/comments \
+  -H "Content-Type: application/json" \
+  -d '{
+    "author": "John Doe",
+    "content": "Great post!"
+  }'
+```
 
 ## Configuration
 
 ### Database Configuration
 
-Database settings are configured in `src/main/resources/liquibase.properties`:
+Database settings are configured in `src/main/resources/application.yml`:
 
-- URL: `jdbc:postgresql://localhost:5432/testdb`
-- Username: `user`
-- Password: `password`
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/testdb
+    username: user
+    password: password
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
+```
+
+You can override these values using environment variables:
+- `DB_URL`
+- `DB_USERNAME`
+- `DB_PASSWORD`
 
 ## Project Structure
 
 ```
-src/
-├── main/
-│   ├── java/org/myblog/
-│   │   ├── config/          # Configuration classes
-│   │   ├── controller/      # REST controllers
-│   │   ├── dto/             # Data Transfer Objects
-│   │   ├── entity/          # JPA entities
-│   │   ├── mapper/          # MapStruct mappers
-│   │   ├── repository/      # JPA repositories
-│   │   └── service/         # Business logic services
-│   ├── resources/
-│   │   ├── db/              # Liquibase changelogs
-│   │   └── liquibase.properties
-│   └── webapp/              # Web application resources
-└── test/
-    └── java/org/myblog/      # Test classes
+myblogonboot/
+├── src/
+│   ├── main/
+│   │   ├── java/com/my/blog/project/myblogonboot/
+│   │   │   ├── MyblogonbootApplication.java
+│   │   │   └── myblog/
+│   │   │       ├── config/          # Configuration classes (CORS)
+│   │   │       ├── controller/      # REST controllers
+│   │   │       ├── dto/             # Data Transfer Objects
+│   │   │       │   ├── comment/
+│   │   │       │   ├── post/
+│   │   │       │   └── search/
+│   │   │       ├── entity/          # Domain entities
+│   │   │       ├── mapper/          # MapStruct mappers
+│   │   │       ├── repository/      # Spring Data JDBC repositories
+│   │   │       └── service/         # Business logic services
+│   │   └── resources/
+│   │       ├── application.yml      # Application configuration
+│   │       └── db/
+│   │           └── changelog/       # Liquibase changesets
+│   └── test/
+│       ├── java/                    # Test classes
+│       └── resources/
+│           └── application-test.yml # Test configuration
+├── build.gradle                     # Gradle build configuration
+├── docker-compose.yml               # PostgreSQL container setup
+└── README.md
 ```
